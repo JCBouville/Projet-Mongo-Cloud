@@ -1,16 +1,16 @@
-
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+import certifi
 import requests
 import json
 import dateutil.parser
 import time
 
+ca = certifi.where()
 
-client = MongoClient("mongodb+srv://user:password@yyyyyyyyyy.xxxxxxxxx.mongodb.net/?retryWrites=true&w=majority", server_api=ServerApi('1'))
+client = MongoClient("mongodb+srv://jeanc:N3WPtRWBV7SGffi4@cluster0.vc8v6x8.mongodb.net/?retryWrites=true&w=majority", server_api=ServerApi('1'), tlsCAFile=ca)
 
 db = client.vls
-
 
 def get_vlille():
     url = "https://opendata.lillemetropole.fr/api/records/1.0/search/?dataset=vlille-realtime&q=&rows=3000&facet=libelle&facet=nom&facet=commune&facet=etat&facet=type&facet=etatconnexion"

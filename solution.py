@@ -8,7 +8,7 @@ ca = certifi.where()
 
 def get_database():
    # Provide the mongodb atlas url to connect python to mongodb using pymongo
-   CONNECTION_STRING = "mongodb+srv://abderzak:abderzak@cluster0.rqtdt3c.mongodb.net/?retryWrites=true&w=majority"
+   CONNECTION_STRING = "mongodb+srv://jeanc:N3WPtRWBV7SGffi4@cluster0.vc8v6x8.mongodb.net/?retryWrites=true&w=majority"
    # Create a connection using MongoClient. 
    client = MongoClient(CONNECTION_STRING, server_api=ServerApi('1'),tlsCAFile=ca)
    return client['vls']
@@ -54,16 +54,12 @@ if __name__ == "__main__":
     
         for elt in nearest_station:
             print("Station proche : ", elt["name"])
-            result = datas.find({"station_id" : elt["_id"]}).sort("date",-1).limit(1)
-            if result[0]["bike_availbale"] >= 1 :
-                print("vélo Disponible : ",result[0]["bike_availbale"])
-                print("Place Disponible : ",result[0]["stand_availbale"])
-                print("Date : ", result[0]["date"])
-            else:
-                print("Plus aucun vélo est disponible, nous somme désolé")
-                print("vélo Disponible : ",result[0]["bike_availbale"])
-                print("Place Disponible : ",result[0]["stand_availbale"])
-                print("Date : ", result[0]["date"])
+            result = datas.find({"station_id" : elt["_id"]}).sort("date",-1).limit(1)[0]
+            if not result["bike_availbale"] >= 1 :
+                print("Plus aucun vélo est disponible, nous sommes désolé")
+            print("vélos Disponibles : ",result["bike_availbale"])
+            print("Places Disponibles : ",result["stand_availbale"])
+            print("Date : ", result["date"])
     
     #Question 4
     
@@ -75,6 +71,8 @@ if __name__ == "__main__":
             print("TAPER [SEARCH] pour rechercher une station")
             print("TAPER [UPDATE] pour mettre à jour une station")
             print("TAPER [DELETE] pour supprimer une station")
+            print("TAPER [DEACTIVATE] pour désactiver les stations dans une zone donnée")
+            print("TAPER [GETRATIO] pour obtenir les stations possèdant un ratio vélo/supports totaux inférieur à 20% entre 18h et 19h les jours ouvrés")
             print("TAPER [QUIT] pour quitter le menu")
 
             decision = input("Entrez votre action\n")
@@ -111,6 +109,16 @@ if __name__ == "__main__":
             elif decision == "DELETE":
                 nom_station_a_supprimer = input("Donner le nom de la station à supprimer : ")
                 stations.delete_one({"name" : nom_station_a_supprimer})
+
+            elif decision == "DEACTIVATE":
+                pass
+            elif decision == "GETRATIO":
+                #print(list(datas.aggregate([{"$project":{"hour":{"$hour":"$date"}, "minute":{"$minute":"$date"}, "second":{"$second":"$date"}}}, {"$match":{"hour": 18}}])))
+                print(list(datas.aggregate([{"$project": {"dayOfWeek":{"$dayOfWeek":"$date"}}}])))
+                #allStationIds = list(stations.distinct("_id"))
+                #result = []
+                #for i in allStationIds:
+                #    datas.find({"station_id" : i, "$hour" : {"$"}})
 
             elif decision == "QUIT":
                 break
