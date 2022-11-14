@@ -2,13 +2,15 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import dateutil.parser
 import time
+import certifi
+ca = certifi.where()
 
 
 def get_database():
    # Provide the mongodb atlas url to connect python to mongodb using pymongo
    CONNECTION_STRING = "mongodb+srv://abderzak:abderzak@cluster0.rqtdt3c.mongodb.net/?retryWrites=true&w=majority"
    # Create a connection using MongoClient. 
-   client = MongoClient(CONNECTION_STRING, server_api=ServerApi('1'))
+   client = MongoClient(CONNECTION_STRING, server_api=ServerApi('1'),tlsCAFile=ca)
    return client['vls']
 
 
@@ -17,22 +19,7 @@ if __name__ == "__main__":
     datas = db_name["datas"]
     stations = db_name["stations"]
 
-    # ID Station Available
-    id_station_available = datas.find({ "bike_availbale" : {"$gte" : 1 }})
-    station_id = []
-    for elt in id_station_available:
-        station_id.append(elt['station_id'])
-
-    
-    # Name Station Available
-    name_station_available = stations.find({"_id" : {"$in" : station_id}})
-    station_name_dispo = []
-    for elt in name_station_available:
-        station_name_dispo.append(elt["name"])
-    
-    #print(station_name[0])
-
-    #Creation index 2D sphere 
+    # #Creation index 2D sphere 
 
     stations.create_index([("geometry" , "2dsphere")])
     
@@ -47,11 +34,8 @@ if __name__ == "__main__":
         lon = float(lon.replace(',','.'))
         lat = float(lat.replace(',','.'))
 
-        # Trouve la station la plus proche et ayant des vélos disponible
+    #     # Trouve les stations les plus proche
         nearest_station = stations.find({
-            "$and" :[
-                {"name" : {"$in" : station_name_dispo}},
-                {
                     'geometry': {
                         "$near": { 
                             "$geometry": { 
@@ -61,21 +45,28 @@ if __name__ == "__main__":
                             "$maxDistance": 1000,"$minDistance": 0
                         }
                     }
-                }
-            ]})
+                
+            })
 
-
-    # Ajouter les lastdata et mettre un index sur les stations id et les heures
+    # lastdata et mettre un index sur les stations id et les heures
         datas.create_index("station_id")
         datas.create_index([("date",1)],unique=False)
     
         for elt in nearest_station:
             print("Station proche : ", elt["name"])
             result = datas.find({"station_id" : elt["_id"]}).sort("date",-1).limit(1)
-            print("vélo Disponible : ",result[0]["bike_availbale"])
-            print("Place Disponible : ",result[0]["stand_availbale"])
+            if result[0]["bike_availbale"] >= 1 :
+                print("vélo Disponible : ",result[0]["bike_availbale"])
+                print("Place Disponible : ",result[0]["stand_availbale"])
+                print("Date : ", result[0]["date"])
+            else:
+                print("Plus aucun vélo est disponible, nous somme désolé")
+                print("vélo Disponible : ",result[0]["bike_availbale"])
+                print("Place Disponible : ",result[0]["stand_availbale"])
+                print("Date : ", result[0]["date"])
     
-    ##Question 4
+    #Question 4
+    
     elif choix == '2':
 
         while True:
@@ -94,7 +85,7 @@ if __name__ == "__main__":
                     print("Nom Station : ",elt_search["name"])
         
             elif decision == "UPDATE":
-                action = input("TAPER [nom] pour modifier le nom de la station ou [TPE] pour changer sa valeur")
+                action = input("TAPER [nom] pour modifier le nom de la station ou [TPE] pour changer sa valeur : ")
                 if action == "nom":
 
                     nom_station_recherche = input("Donner le nom de la station à modifier : ")
@@ -132,10 +123,3 @@ if __name__ == "__main__":
         print("Mauvais choix")
 #2,98
 #50,61
-
-
-    
-
-
-
-
