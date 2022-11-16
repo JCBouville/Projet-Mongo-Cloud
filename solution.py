@@ -72,7 +72,7 @@ if __name__ == "__main__":
             print("TAPER [UPDATE] pour mettre à jour une station")
             print("TAPER [DELETE] pour supprimer une station")
             print("TAPER [DEACTIVATE] pour désactiver les stations dans une zone donnée")
-            print("TAPER [GETRATIO] pour obtenir les stations possèdant un ratio vélo/supports totaux inférieur à 20% entre 18h et 19h les jours ouvrés")
+            print("TAPER [GETRATIO] pour obtenir les stations possèdant un ratio vélo/supports totaux inférieur à 20% sur une plage horaire donnée les jours ouvrés")
             print("TAPER [QUIT] pour quitter le menu")
 
             decision = input("Entrez votre action\n")
@@ -113,12 +113,87 @@ if __name__ == "__main__":
             elif decision == "DEACTIVATE":
                 pass
             elif decision == "GETRATIO":
-                #print(list(datas.aggregate([{"$project":{"hour":{"$hour":"$date"}, "minute":{"$minute":"$date"}, "second":{"$second":"$date"}}}, {"$match":{"hour": 18}}])))
-                print(list(datas.aggregate([{"$project": {"dayOfWeek":{"$dayOfWeek":"$date"}}}])))
-                #allStationIds = list(stations.distinct("_id"))
-                #result = []
-                #for i in allStationIds:
-                #    datas.find({"station_id" : i, "$hour" : {"$"}})
+                lowerBound = int(input("De quelle heure ?\n"))
+                upperBound = int(input("À quelle heure ?\n"))
+                filteredStations = datas.aggregate([{
+                    "$addFields":{
+                        "ratio":{
+                            "$cond":[
+                                {"$eq":[{"$add":["$bike_availbale", "$stand_availbale"]}, 0]},
+                                "N/A",
+                                {"$divide":["$bike_availbale", {"$add":["$bike_availbale", "$stand_availbale"]}]}
+                            ]
+                        },
+                        "hour":{
+                            "$hour":"$date"
+                        },
+                        "minute":{
+                            "$minute":"$date"
+                        },
+                        "second":{
+                            "$second":"$date"
+                        },
+                        "dayWeek":{
+                            "$switch":{
+                                "branches":[
+                                    {
+                                        "case":{"$eq":[{"$dayOfWeek":"$date"}, 2]},
+                                        "then":"lundi"
+                                    },
+                                    {
+                                        "case":{"$eq":[{"$dayOfWeek":"$date"}, 3]},
+                                        "then":"mardi"
+                                    },
+                                    {
+                                        "case":{"$eq":[{"$dayOfWeek":"$date"}, 4]},
+                                        "then":"mercredi"
+                                    },
+                                    {
+                                        "case":{"$eq":[{"$dayOfWeek":"$date"}, 5]},
+                                        "then":"jeudi"
+                                    },
+                                    {
+                                        "case":{"$eq":[{"$dayOfWeek":"$date"}, 6]},
+                                        "then":"vendredi"
+                                    }
+                                ],
+                                "default":"toFilter"
+                            }
+                        }
+                    }
+                },
+                {
+                    "$match":{
+                        "$and":[
+                            {"ratio":{"$ne":"N/A"}},
+                            {"ratio":{"$lte":0.2}},
+                            {"dayWeek":{"$ne":"toFilter"}},
+                            {"$or":[
+                                {"$and":[{"hour":{"$gte":lowerBound}}, {"hour":{"$lt":upperBound}}]},
+                                {"$and":[
+                                    {"hour":{"$eq":upperBound}},
+                                    {"minute":{"$eq":0}},
+                                    {"second":{"$eq":0}}
+                                ]}
+                            ]}
+                        ]
+                    }
+                },
+                {
+                    "$project":{
+                        "station_id":"$station_id",
+                        "dayWeek":"$dayWeek",
+                        "hour":"$hour",
+                        "minute":"$minute",
+                        "second":"$second",
+                        "bike_availbale":"$bike_availbale",
+                        "stand_availbale":"$stand_availbale",
+                        "ratio":"$ratio"
+                    }
+                }])
+
+                for elt in filteredStations:
+                    print(list(stations.find({"_id":elt["station_id"]}))[0]["name"],"jour:",elt['dayWeek'],"heure:", f"{elt['hour']}:{elt['minute']}:{elt['second']}", "bike_available:", elt['bike_availbale'],"stand_available:", elt['stand_availbale'],"ratio:", elt['ratio'])
 
             elif decision == "QUIT":
                 break
