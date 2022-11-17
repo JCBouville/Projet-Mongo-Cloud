@@ -31,7 +31,8 @@ vlilles_to_insert = [
             'dataset': 'Lille',
             'id_ext': elem.get('fields', {}).get('libelle')
         },
-        'tpe': elem.get('fields', {}).get('type', '') == 'AVEC TPE'
+        'tpe': elem.get('fields', {}).get('type', '') == 'AVEC TPE',
+        'deactivated':False
     }
     for elem in vlilles
 ]
