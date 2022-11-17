@@ -61,3 +61,4 @@ while True:
         db.datas.update_one({'date': data["date"], "station_id": data["station_id"]}, { "$set": data }, upsert=True)
 
     time.sleep(10)
+    
