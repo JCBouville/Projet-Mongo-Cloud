@@ -9,7 +9,7 @@ ca = certifi.where()
 
 def get_database():
    # Provide the mongodb atlas url to connect python to mongodb using pymongo
-   CONNECTION_STRING = "mongodb+srv://foxTrap:ZsAIeNIgBXsJUkcP@cluster0.72igayc.mongodb.net/?retryWrites=true&w=majority"
+   CONNECTION_STRING = "mongodb+srv://jeanc:N3WPtRWBV7SGffi4@cluster0.vc8v6x8.mongodb.net/?retryWrites=true&w=majority"
    # Create a connection using MongoClient. 
    client = MongoClient(CONNECTION_STRING, server_api=ServerApi('1'),tlsCAFile=ca)
    return client['vls']
